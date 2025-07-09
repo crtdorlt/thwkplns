@@ -5,15 +5,18 @@ import android.content.SharedPreferences
 import android.util.Log
 import com.theweek.plan.data.remote.SupabaseClient
 import com.theweek.plan.model.Task
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresListChanges
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import java.util.Date
 
 /**
  * Repository for syncing tasks with Supabase
- * This is a simplified version for demonstration purposes
  */
 class TaskSyncRepository(private val context: Context) {
     private val TAG = "TaskSyncRepository"
@@ -21,6 +24,22 @@ class TaskSyncRepository(private val context: Context) {
     private val sharedPreferences: SharedPreferences by lazy {
         context.getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
     }
+
+    @Serializable
+    data class TaskRow(
+        val id: String,
+        val user_id: String,
+        val title: String,
+        val description: String = "",
+        val category: String,
+        val priority: Int,
+        val due_date: Long,
+        val due_time: Long? = null,
+        val is_completed: Boolean = false,
+        val productivity_score: Int? = null,
+        val created_at: Long,
+        val updated_at: Long
+    )
 
     /**
      * Get the last sync timestamp
@@ -38,16 +57,47 @@ class TaskSyncRepository(private val context: Context) {
 
     /**
      * Sync local tasks to Supabase
-     * This is a simplified version for demonstration purposes
      */
     suspend fun syncTasksToSupabase(localTasks: List<Task>): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would sync tasks with Supabase
+            val currentUser = SupabaseClient.currentUserOrNull()
+            if (currentUser == null) {
+                return@withContext Result.failure(Exception("User not authenticated"))
+            }
+
             Log.d(TAG, "Syncing ${localTasks.size} tasks to Supabase")
+            
+            // Convert tasks to TaskRow format
+            val taskRows = localTasks.map { task ->
+                TaskRow(
+                    id = task.id,
+                    user_id = currentUser.id,
+                    title = task.title,
+                    description = task.description,
+                    category = task.category,
+                    priority = task.priority,
+                    due_date = task.dueDate.time,
+                    due_time = task.dueTime?.time,
+                    is_completed = task.isCompleted,
+                    productivity_score = task.productivityScore,
+                    created_at = task.createdAt.time,
+                    updated_at = task.updatedAt.time
+                )
+            }
+            
+            // Upsert tasks to Supabase
+            if (taskRows.isNotEmpty()) {
+                SupabaseClient.database
+                    .from("tasks")
+                    .upsert(taskRows)
+            }
             
             // Update last sync timestamp
             setLastSyncTimestamp(System.currentTimeMillis())
+            
+            Log.d(TAG, "Tasks synced successfully to Supabase")
             Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing tasks to Supabase", e)
             Result.failure(e)
@@ -56,19 +106,51 @@ class TaskSyncRepository(private val context: Context) {
 
     /**
      * Fetch tasks from Supabase
-     * This is a simplified version for demonstration purposes
      */
     suspend fun fetchTasksFromSupabase(since: Long? = null): Result<List<Task>> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would fetch tasks from Supabase
+            val currentUser = SupabaseClient.currentUserOrNull()
+            if (currentUser == null) {
+                return@withContext Result.failure(Exception("User not authenticated"))
+            }
+
             Log.d(TAG, "Fetching tasks from Supabase since $since")
             
-            // Return an empty list for demonstration purposes
-            val tasks = emptyList<Task>()
+            val query = SupabaseClient.database
+                .from("tasks")
+                .select()
+                .eq("user_id", currentUser.id)
+            
+            // Add timestamp filter if provided
+            val response = if (since != null) {
+                query.gt("updated_at", since).decodeList<TaskRow>()
+            } else {
+                query.decodeList<TaskRow>()
+            }
+            
+            // Convert TaskRow to Task
+            val tasks = response.map { taskRow ->
+                Task(
+                    id = taskRow.id,
+                    title = taskRow.title,
+                    description = taskRow.description,
+                    category = taskRow.category,
+                    priority = taskRow.priority,
+                    dueDate = Date(taskRow.due_date),
+                    dueTime = taskRow.due_time?.let { Date(it) },
+                    isCompleted = taskRow.is_completed,
+                    productivityScore = taskRow.productivity_score,
+                    createdAt = Date(taskRow.created_at),
+                    updatedAt = Date(taskRow.updated_at)
+                )
+            }
             
             // Update last sync timestamp
             setLastSyncTimestamp(System.currentTimeMillis())
+            
+            Log.d(TAG, "Fetched ${tasks.size} tasks from Supabase")
             Result.success(tasks)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching tasks from Supabase", e)
             Result.failure(e)
@@ -77,25 +159,92 @@ class TaskSyncRepository(private val context: Context) {
 
     /**
      * Subscribe to real-time task updates
-     * This is a simplified version for demonstration purposes
      */
-    fun subscribeToTaskUpdates(userId: String): Flow<Any> {
-        Log.d(TAG, "Subscribing to real-time updates for user $userId")
-        // Return an empty flow for demonstration purposes
-        return flowOf()
+    fun subscribeToTaskUpdates(userId: String): Flow<Any> = flow {
+        try {
+            Log.d(TAG, "Subscribing to real-time updates for user $userId")
+            
+            val channel = SupabaseClient.realtime.channel("tasks")
+            
+            val changes = channel.postgresListChanges("public:tasks") {
+                filter = "user_id=eq.$userId"
+            }
+            
+            channel.subscribe()
+            
+            changes.collect { change ->
+                Log.d(TAG, "Received real-time update: $change")
+                emit(change)
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error subscribing to real-time updates", e)
+        }
     }
 
     /**
      * Delete a task from Supabase
-     * This is a simplified version for demonstration purposes
      */
     suspend fun deleteTaskFromSupabase(taskId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would delete a task from Supabase
+            val currentUser = SupabaseClient.currentUserOrNull()
+            if (currentUser == null) {
+                return@withContext Result.failure(Exception("User not authenticated"))
+            }
+
             Log.d(TAG, "Deleting task $taskId from Supabase")
+            
+            SupabaseClient.database
+                .from("tasks")
+                .delete()
+                .eq("id", taskId)
+                .eq("user_id", currentUser.id)
+            
+            Log.d(TAG, "Task deleted successfully from Supabase")
             Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting task from Supabase", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Sync a single task to Supabase
+     */
+    suspend fun syncSingleTaskToSupabase(task: Task): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val currentUser = SupabaseClient.currentUserOrNull()
+            if (currentUser == null) {
+                return@withContext Result.failure(Exception("User not authenticated"))
+            }
+
+            Log.d(TAG, "Syncing single task ${task.id} to Supabase")
+            
+            val taskRow = TaskRow(
+                id = task.id,
+                user_id = currentUser.id,
+                title = task.title,
+                description = task.description,
+                category = task.category,
+                priority = task.priority,
+                due_date = task.dueDate.time,
+                due_time = task.dueTime?.time,
+                is_completed = task.isCompleted,
+                productivity_score = task.productivityScore,
+                created_at = task.createdAt.time,
+                updated_at = task.updatedAt.time
+            )
+            
+            SupabaseClient.database
+                .from("tasks")
+                .upsert(taskRow)
+            
+            Log.d(TAG, "Single task synced successfully to Supabase")
+            Result.success(Unit)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error syncing single task to Supabase", e)
             Result.failure(e)
         }
     }

@@ -1,12 +1,8 @@
 package com.theweek.plan.model
 
-import kotlinx.serialization.Serializable
-import java.util.Date
-
 /**
  * Represents a user profile in the application
  */
-@Serializable
 data class UserProfile(
     val id: String, // UUID from Supabase Auth
     val email: String,

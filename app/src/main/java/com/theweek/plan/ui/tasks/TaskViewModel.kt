@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.theweek.plan.data.AppDatabase
 import com.theweek.plan.data.CategoryCount
 import com.theweek.plan.data.TaskRepository
+import com.theweek.plan.data.sync.SyncManager
 import com.theweek.plan.model.Task
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -15,6 +16,7 @@ import java.util.Date
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: TaskRepository
+    private val syncManager: SyncManager
     val allTasks: LiveData<List<Task>>
     val completedTasksCount: LiveData<Int>
     val pendingTasksCount: LiveData<Int>
@@ -24,6 +26,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val taskDao = AppDatabase.getDatabase(application).taskDao()
         repository = TaskRepository(taskDao)
+        syncManager = SyncManager(application)
         allTasks = repository.allTasks
         completedTasksCount = repository.completedTasksCount
         pendingTasksCount = repository.pendingTasksCount
@@ -53,21 +56,35 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun insertTask(task: Task) = viewModelScope.launch(Dispatchers.IO) {
         repository.insertTask(task)
+        // Sync to Supabase
+        syncManager.syncSingleTask(task)
     }
 
     fun updateTask(task: Task) = viewModelScope.launch(Dispatchers.IO) {
         repository.updateTask(task)
+        // Sync to Supabase
+        syncManager.syncSingleTask(task)
     }
 
     fun deleteTask(task: Task) = viewModelScope.launch(Dispatchers.IO) {
         repository.deleteTask(task)
+        // Delete from Supabase
+        syncManager.deleteTask(task.id)
     }
 
     fun deleteTaskById(taskId: String) = viewModelScope.launch(Dispatchers.IO) {
         repository.deleteTaskById(taskId)
+        // Delete from Supabase
+        syncManager.deleteTask(taskId)
     }
 
     fun updateTaskCompletionStatus(taskId: String, isCompleted: Boolean) = viewModelScope.launch(Dispatchers.IO) {
         repository.updateTaskCompletionStatus(taskId, isCompleted)
+        // Sync the updated task to Supabase
+        val task = repository.getTaskById(taskId).value
+        task?.let { 
+            val updatedTask = it.copy(isCompleted = isCompleted, updatedAt = Date())
+            syncManager.syncSingleTask(updatedTask)
+        }
     }
 }

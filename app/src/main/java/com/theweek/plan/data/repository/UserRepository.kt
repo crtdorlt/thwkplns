@@ -5,14 +5,17 @@ import android.content.SharedPreferences
 import android.util.Log
 import com.theweek.plan.data.remote.SupabaseClient
 import com.theweek.plan.model.UserProfile
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 
 /**
- * Repository for handling user authentication and profile management
- * This is a simplified version for demonstration purposes
+ * Repository for handling user authentication and profile management with Supabase
  */
 class UserRepository(private val context: Context) {
     private val TAG = "UserRepository"
@@ -21,28 +24,43 @@ class UserRepository(private val context: Context) {
         context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
     }
 
+    @Serializable
+    data class ProfileRow(
+        val id: String,
+        val email: String,
+        val display_name: String? = null,
+        val avatar_url: String? = null,
+        val prefers_dark_mode: Boolean = false,
+        val week_starts_on: Int = 1,
+        val reminder_time: String? = null,
+        val last_sync_timestamp: Long = 0,
+        val created_at: String? = null,
+        val updated_at: String? = null
+    )
+
     /**
      * Sign up a new user with email and password
-     * This is a simplified version for demonstration purposes
      */
     suspend fun signUp(email: String, password: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would sign up a user with Supabase
             Log.d(TAG, "Signing up user with email: $email")
             
-            // Generate a mock user ID
-            val userId = "user-${System.currentTimeMillis()}"
+            val result = SupabaseClient.auth.signUpWith(Email) {
+                this.email = email
+                this.password = password
+            }
             
-            // Create a mock user profile
+            val userId = result.user?.id ?: throw Exception("User ID not found after signup")
+            
+            // Create user profile in database
             createUserProfile(UserProfile(
                 id = userId,
                 email = email
             ))
             
-            // Store the user ID in SharedPreferences to maintain login state
-            sharedPreferences.edit().putString("user_id", userId).apply()
-            
+            Log.d(TAG, "User signed up successfully: $userId")
             Result.success(userId)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error signing up user", e)
             Result.failure(e)
@@ -51,20 +69,21 @@ class UserRepository(private val context: Context) {
 
     /**
      * Sign in with email and password
-     * This is a simplified version for demonstration purposes
      */
     suspend fun signIn(email: String, password: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would sign in a user with Supabase
             Log.d(TAG, "Signing in user with email: $email")
             
-            // Generate a mock user ID
-            val userId = "user-${System.currentTimeMillis()}"
+            val result = SupabaseClient.auth.signInWith(Email) {
+                this.email = email
+                this.password = password
+            }
             
-            // Store the user ID in SharedPreferences to maintain login state
-            sharedPreferences.edit().putString("user_id", userId).apply()
+            val userId = result.user?.id ?: throw Exception("User ID not found after signin")
             
+            Log.d(TAG, "User signed in successfully: $userId")
             Result.success(userId)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error signing in user", e)
             Result.failure(e)
@@ -73,17 +92,19 @@ class UserRepository(private val context: Context) {
 
     /**
      * Sign out the current user
-     * This is a simplified version for demonstration purposes
      */
     suspend fun signOut(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would sign out a user from Supabase
             Log.d(TAG, "Signing out user")
             
-            // Clear the user ID from SharedPreferences to log out
-            sharedPreferences.edit().remove("user_id").apply()
+            SupabaseClient.auth.signOut()
             
+            // Clear any cached data
+            sharedPreferences.edit().clear().apply()
+            
+            Log.d(TAG, "User signed out successfully")
             Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error signing out user", e)
             Result.failure(e)
@@ -92,13 +113,16 @@ class UserRepository(private val context: Context) {
 
     /**
      * Reset password for a user
-     * This is a simplified version for demonstration purposes
      */
     suspend fun resetPassword(email: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would reset a user's password with Supabase
             Log.d(TAG, "Resetting password for email: $email")
+            
+            SupabaseClient.auth.resetPasswordForEmail(email)
+            
+            Log.d(TAG, "Password reset email sent successfully")
             Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error resetting password", e)
             Result.failure(e)
@@ -107,13 +131,27 @@ class UserRepository(private val context: Context) {
 
     /**
      * Create a user profile in the database
-     * This is a simplified version for demonstration purposes
      */
     private suspend fun createUserProfile(userProfile: UserProfile): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would create a user profile in Supabase
             Log.d(TAG, "Creating user profile for user: ${userProfile.id}")
+            
+            val profileRow = ProfileRow(
+                id = userProfile.id,
+                email = userProfile.email,
+                display_name = userProfile.displayName,
+                avatar_url = userProfile.avatarUrl,
+                prefers_dark_mode = userProfile.prefersDarkMode,
+                week_starts_on = userProfile.weekStartsOn,
+                reminder_time = userProfile.reminderTime,
+                last_sync_timestamp = userProfile.lastSyncTimestamp
+            )
+            
+            SupabaseClient.database.from("profiles").insert(profileRow)
+            
+            Log.d(TAG, "User profile created successfully")
             Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error creating user profile", e)
             Result.failure(e)
@@ -122,23 +160,37 @@ class UserRepository(private val context: Context) {
 
     /**
      * Get the current user's profile
-     * This is a simplified version for demonstration purposes
      */
     suspend fun getUserProfile(): Result<UserProfile?> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would fetch a user's profile from Supabase
-            Log.d(TAG, "Getting user profile")
+            val currentUser = SupabaseClient.currentUserOrNull()
+            if (currentUser == null) {
+                Log.d(TAG, "No authenticated user found")
+                return@withContext Result.success(null)
+            }
             
-            // Return a mock user profile for demonstration purposes
-            val mockProfile = UserProfile(
-                id = "user-123",
-                email = "user@example.com",
-                displayName = "Demo User",
-                prefersDarkMode = true,
-                weekStartsOn = 1
+            Log.d(TAG, "Getting user profile for user: ${currentUser.id}")
+            
+            val response = SupabaseClient.database
+                .from("profiles")
+                .select()
+                .eq("id", currentUser.id)
+                .decodeSingle<ProfileRow>()
+            
+            val userProfile = UserProfile(
+                id = response.id,
+                email = response.email,
+                displayName = response.display_name ?: "",
+                avatarUrl = response.avatar_url,
+                prefersDarkMode = response.prefers_dark_mode,
+                weekStartsOn = response.week_starts_on,
+                reminderTime = response.reminder_time,
+                lastSyncTimestamp = response.last_sync_timestamp
             )
             
-            Result.success(mockProfile)
+            Log.d(TAG, "User profile retrieved successfully")
+            Result.success(userProfile)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error getting user profile", e)
             Result.failure(e)
@@ -147,13 +199,30 @@ class UserRepository(private val context: Context) {
 
     /**
      * Update the user profile
-     * This is a simplified version for demonstration purposes
      */
     suspend fun updateUserProfile(userProfile: UserProfile): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // In a real implementation, this would update a user's profile in Supabase
             Log.d(TAG, "Updating user profile for user: ${userProfile.id}")
+            
+            val profileRow = ProfileRow(
+                id = userProfile.id,
+                email = userProfile.email,
+                display_name = userProfile.displayName,
+                avatar_url = userProfile.avatarUrl,
+                prefers_dark_mode = userProfile.prefersDarkMode,
+                week_starts_on = userProfile.weekStartsOn,
+                reminder_time = userProfile.reminderTime,
+                last_sync_timestamp = userProfile.lastSyncTimestamp
+            )
+            
+            SupabaseClient.database
+                .from("profiles")
+                .update(profileRow)
+                .eq("id", userProfile.id)
+            
+            Log.d(TAG, "User profile updated successfully")
             Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error updating user profile", e)
             Result.failure(e)
@@ -162,20 +231,26 @@ class UserRepository(private val context: Context) {
 
     /**
      * Get the authentication state as a Flow
-     * This is a simplified version for demonstration purposes
      */
-    fun getAuthState(): Flow<Boolean> {
-        // Return a flow that emits the current authentication state
-        return flowOf(sharedPreferences.getString("user_id", null) != null)
+    fun getAuthState(): Flow<Boolean> = flow {
+        try {
+            val isAuth = SupabaseClient.isAuthenticated()
+            emit(isAuth)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking auth state", e)
+            emit(false)
+        }
     }
 
     /**
      * Check if the user is authenticated
-     * This is a simplified version for demonstration purposes
      */
     suspend fun isAuthenticated(): Boolean {
-        // For demonstration purposes, check if we have a stored user ID
-        val userId = sharedPreferences.getString("user_id", null)
-        return userId != null
+        return try {
+            SupabaseClient.isAuthenticated()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking authentication", e)
+            false
+        }
     }
 }
