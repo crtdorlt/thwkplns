@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
+    id 'kotlinx-serialization'
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin' version '2.0.1'
 }
 
@@ -73,6 +74,10 @@ dependencies {
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$rootProject.ext.supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$rootProject.ext.supabase_version"
     implementation "io.github.jan-tennert.supabase:storage-kt:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:serializer-kotlinx:$rootProject.ext.supabase_version"
+    
+    // Kotlinx Serialization
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
     
     // Dotenv for environment variables
     implementation 'io.github.cdimascio:dotenv-kotlin:6.4.1'

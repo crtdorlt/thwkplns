@@ -49,7 +49,12 @@ class TheWeekPlanApp : Application() {
      * Initialize Supabase client
      */
     private fun initializeSupabase() {
-        SupabaseClient.initialize(this)
+        try {
+            SupabaseClient.initialize(this)
+        } catch (e: Exception) {
+            // Log error but don't crash the app
+            e.printStackTrace()
+        }
     }
     
     /**

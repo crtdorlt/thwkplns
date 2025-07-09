@@ -90,7 +90,12 @@ class MainActivity : AppCompatActivity() {
      */
     private fun checkAuthStatus() {
         lifecycleScope.launch {
-            if (!userRepository.isAuthenticated()) {
+            try {
+                if (!userRepository.isAuthenticated()) {
+                    navigateToLogin()
+                }
+            } catch (e: Exception) {
+                // If there's an error checking auth (e.g., Supabase not configured), go to login
                 navigateToLogin()
             }
         }
