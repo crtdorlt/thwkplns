@@ -83,20 +83,71 @@ class LoginActivity : AppCompatActivity() {
         setLoading(true)
 
         lifecycleScope.launch {
-            userRepository.signIn(email, password).fold(
-                onSuccess = {
-                    // Login successful
-                    setLoading(false)
-                    navigateToMain()
-                },
-                onFailure = { exception ->
-                    // Login failed
-                    setLoading(false)
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Login failed: ${exception.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+            try {
+                userRepository.signIn(email, password).fold(
+                    onSuccess = { userId ->
+                        // Login successful
+                        setLoading(false)
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "Welcome back!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        navigateToMain()
+                    },
+                    onFailure = { exception ->
+                        // Login failed
+                        setLoading(false)
+                        val errorMessage = when {
+                            exception.message?.contains("Invalid login credentials") == true -> 
+                                "Invalid email or password. Please try again."
+                            exception.message?.contains("Email not confirmed") == true -> 
+                                "Please check your email and confirm your account first."
+                            exception.message?.contains("Too many requests") == true -> 
+                                "Too many login attempts. Please try again later."
+                            else -> "Login failed: ${exception.message}"
+                        }
+                        Toast.makeText(
+                            this@LoginActivity,
+                            errorMessage,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            } catch (e: Exception) {
+                setLoading(false)
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Network error. Please check your connection and try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+    
+    private fun setLoading(isLoading: Boolean) {
+        binding.loginButton.isEnabled = !isLoading
+        binding.emailInput.isEnabled = !isLoading
+        binding.passwordInput.isEnabled = !isLoading
+        binding.forgotPassword.isEnabled = !isLoading
+        binding.signupLink.isEnabled = !isLoading
+        
+        if (isLoading) {
+            binding.progressBar.visibility = View.VISIBLE
+            binding.loginButton.text = ""
+        } else {
+            binding.progressBar.visibility = View.GONE
+            binding.loginButton.text = "Login"
+        }
+    }
+    
+    private fun navigateToMain() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+}
                 }
             )
         }

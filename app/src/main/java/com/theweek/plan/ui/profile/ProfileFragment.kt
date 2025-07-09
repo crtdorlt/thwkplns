@@ -66,24 +66,89 @@ class ProfileFragment : Fragment() {
     
     private fun loadUserProfile() {
         lifecycleScope.launch {
-            userRepository.getUserProfile().fold(
-                onSuccess = { profile ->
-                    if (profile != null) {
-                        userProfile = profile
-                        updateUI(profile)
-                    } else {
-                        // User is not authenticated or profile not found
+            try {
+                userRepository.getUserProfile().fold(
+                    onSuccess = { profile ->
+                        if (profile != null) {
+                            userProfile = profile
+                            updateUI(profile)
+                        } else {
+                            // User is not authenticated or profile not found
+                            navigateToLogin()
+                        }
+                    },
+                    onFailure = { exception ->
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to load profile: ${exception.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        // If profile loading fails, might need to re-authenticate
                         navigateToLogin()
                     }
-                },
-                onFailure = { exception ->
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to load profile: ${exception.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                )
+            } catch (e: Exception) {
+                Toast.makeText(
+                    requireContext(),
+                    "Error loading profile: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+                navigateToLogin()
+            }
+        }
+    }
+    
+    private fun updateUI(profile: UserProfile) {
+        // Set user info
+        binding.displayName.text = if (profile.displayName.isNotEmpty()) {
+            profile.displayName
+        } else {
+            // Extract name from email if display name is empty
+            profile.email.substringBefore("@").replaceFirstChar { it.uppercase() }
+        }
+        binding.email.text = profile.email
+        
+        // Set dark mode switch from user profile (now using real data)
+        binding.darkModeSwitch.isChecked = profile.prefersDarkMode
+        
+        // Set week start day
+        val weekDays = arrayOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+        binding.weekStartValue.text = weekDays[profile.weekStartsOn]
+        
+        // Set reminder time
+        binding.reminderTimeValue.text = if (profile.reminderTime != null) {
+            // Format the time for display
+            try {
+                val timeParts = profile.reminderTime.split(":")
+                if (timeParts.size == 2) {
+                    val hour = timeParts[0].toInt()
+                    val minute = timeParts[1].toInt()
+                    val calendar = java.util.Calendar.getInstance()
+                    calendar.set(java.util.Calendar.HOUR_OF_DAY, hour)
+                    calendar.set(java.util.Calendar.MINUTE, minute)
+                    val displayFormat = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+                    displayFormat.format(calendar.time)
+                } else {
+                    profile.reminderTime
                 }
-            )
+            } catch (e: Exception) {
+                profile.reminderTime
+            }
+        } else {
+            "Not set"
+        }
+        
+        // Set last sync time
+        updateLastSyncTime(profile.lastSyncTimestamp)
+    }
+    
+    private fun updateLastSyncTime(timestamp: Long) {
+        if (timestamp > 0) {
+            val date = java.util.Date(timestamp)
+            val format = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.getDefault())
+            binding.lastSyncValue.text = "Last sync: ${format.format(date)}"
+        } else {
+            binding.lastSyncValue.text = "Never synced"
         }
     }
     
@@ -126,7 +191,16 @@ class ProfileFragment : Fragment() {
         
         // Dark mode switch - using the same implementation as in SettingsActivity
         binding.darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            // Save the preference to shared preferences only (not to user profile)
+            // Update user profile with dark mode preference
+            userProfile?.let { profile ->
+                val updatedProfile = profile.copy(
+                    prefersDarkMode = isChecked,
+                    updatedAt = System.currentTimeMillis()
+                )
+                updateUserProfile(updatedProfile)
+            }
+            
+            // Also save to shared preferences for immediate theme change
             val sharedPrefs = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
             sharedPrefs.edit().putBoolean("dark_mode", isChecked).apply()
             
@@ -149,7 +223,10 @@ class ProfileFragment : Fragment() {
                 .setTitle("Week Starts On")
                 .setSingleChoiceItems(weekDays, currentSelection) { dialog, which ->
                     userProfile?.let {
-                        val updatedProfile = it.copy(weekStartsOn = which)
+                        val updatedProfile = it.copy(
+                            weekStartsOn = which,
+                            updatedAt = System.currentTimeMillis()
+                        )
                         updateUserProfile(updatedProfile)
                         binding.weekStartValue.text = weekDays[which]
                     }
@@ -176,7 +253,10 @@ class ProfileFragment : Fragment() {
                 { _, hourOfDay, minute ->
                     val reminderTime = String.format("%02d:%02d", hourOfDay, minute)
                     userProfile?.let {
-                        val updatedProfile = it.copy(reminderTime = reminderTime)
+                        val updatedProfile = it.copy(
+                            reminderTime = reminderTime,
+                            updatedAt = System.currentTimeMillis()
+                        )
                         updateUserProfile(updatedProfile)
                         
                         // Format for display
@@ -250,16 +330,22 @@ class ProfileFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
-                // TODO: Implement actual sync logic with TaskSyncRepository
-                // For now, just update the timestamp
-                userProfile?.let {
-                    val timestamp = System.currentTimeMillis()
-                    val updatedProfile = it.copy(lastSyncTimestamp = timestamp)
-                    updateUserProfile(updatedProfile)
-                    updateLastSyncTime(timestamp)
+                // Perform actual sync with Supabase
+                val taskViewModel = ViewModelProvider(requireActivity())[com.theweek.plan.ui.tasks.TaskViewModel::class.java]
+                val syncSuccess = taskViewModel.performFullSync()
+                
+                if (syncSuccess) {
+                    Toast.makeText(requireContext(), "Sync completed successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Sync completed with some issues", Toast.LENGTH_SHORT).show()
                 }
                 
-                Toast.makeText(requireContext(), "Sync completed", Toast.LENGTH_SHORT).show()
+                // Update the profile with new sync timestamp
+                userProfile?.let {
+                    val updatedProfile = it.copy(lastSyncTimestamp = System.currentTimeMillis())
+                    updateUserProfile(updatedProfile)
+                    updateLastSyncTime(updatedProfile.lastSyncTimestamp)
+                }
             } catch (e: Exception) {
                 Toast.makeText(
                     requireContext(),

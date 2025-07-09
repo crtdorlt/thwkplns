@@ -27,8 +27,8 @@ class MainActivity : AppCompatActivity() {
         // Initialize user repository
         userRepository = UserRepository(this)
         
-        // Check if user is authenticated
-        checkAuthStatus()
+        // Check if user is authenticated and initialize sync
+        checkAuthStatusAndInitialize()
         
         // Load theme preference
         val sharedPrefs = getSharedPreferences("settings", MODE_PRIVATE)
@@ -86,17 +86,37 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
-     * Check if the user is authenticated and redirect to login if not
+     * Check if the user is authenticated, redirect to login if not, and initialize sync if authenticated
      */
-    private fun checkAuthStatus() {
+    private fun checkAuthStatusAndInitialize() {
         lifecycleScope.launch {
             try {
-                if (!userRepository.isAuthenticated()) {
+                val isAuthenticated = userRepository.isAuthenticated()
+                if (!isAuthenticated) {
                     navigateToLogin()
+                } else {
+                    // User is authenticated, start background sync
+                    initializeSync()
                 }
             } catch (e: Exception) {
                 // If there's an error checking auth (e.g., Supabase not configured), go to login
                 navigateToLogin()
+            }
+        }
+    }
+    
+    /**
+     * Initialize sync manager and start background sync
+     */
+    private fun initializeSync() {
+        lifecycleScope.launch {
+            try {
+                // Get TaskViewModel and start sync
+                val taskViewModel = ViewModelProvider(this@MainActivity)[com.theweek.plan.ui.tasks.TaskViewModel::class.java]
+                taskViewModel.startSync()
+            } catch (e: Exception) {
+                // Log error but don't crash the app
+                e.printStackTrace()
             }
         }
     }

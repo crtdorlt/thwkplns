@@ -89,25 +89,73 @@ class SignupActivity : AppCompatActivity() {
         setLoading(true)
 
         lifecycleScope.launch {
-            userRepository.signUp(email, password).fold(
-                onSuccess = { userId ->
-                    // Sign up successful
-                    setLoading(false)
-                    Toast.makeText(
-                        this@SignupActivity,
-                        "Account created successfully! Please check your email to verify your account.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    navigateToMain()
-                },
-                onFailure = { exception ->
-                    // Sign up failed
-                    setLoading(false)
-                    Toast.makeText(
-                        this@SignupActivity,
-                        "Sign up failed: ${exception.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+            try {
+                userRepository.signUp(email, password).fold(
+                    onSuccess = { userId ->
+                        // Sign up successful
+                        setLoading(false)
+                        Toast.makeText(
+                            this@SignupActivity,
+                            "Account created successfully! Welcome to The Week Plan!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        navigateToMain()
+                    },
+                    onFailure = { exception ->
+                        // Sign up failed
+                        setLoading(false)
+                        val errorMessage = when {
+                            exception.message?.contains("User already registered") == true -> 
+                                "An account with this email already exists. Please try logging in instead."
+                            exception.message?.contains("Password should be at least") == true -> 
+                                "Password must be at least 6 characters long."
+                            exception.message?.contains("Invalid email") == true -> 
+                                "Please enter a valid email address."
+                            exception.message?.contains("Signup is disabled") == true -> 
+                                "Account creation is currently disabled. Please contact support."
+                            else -> "Sign up failed: ${exception.message}"
+                        }
+                        Toast.makeText(
+                            this@SignupActivity,
+                            errorMessage,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            } catch (e: Exception) {
+                setLoading(false)
+                Toast.makeText(
+                    this@SignupActivity,
+                    "Network error. Please check your connection and try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+    
+    private fun setLoading(isLoading: Boolean) {
+        binding.signupButton.isEnabled = !isLoading
+        binding.emailInput.isEnabled = !isLoading
+        binding.passwordInput.isEnabled = !isLoading
+        binding.confirmPasswordInput.isEnabled = !isLoading
+        binding.loginLink.isEnabled = !isLoading
+        
+        if (isLoading) {
+            binding.progressBar.visibility = View.VISIBLE
+            binding.signupButton.text = ""
+        } else {
+            binding.progressBar.visibility = View.GONE
+            binding.signupButton.text = "Sign Up"
+        }
+    }
+    
+    private fun navigateToMain() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
+}
                 }
             )
         }

@@ -59,25 +59,60 @@ class ForgotPasswordActivity : AppCompatActivity() {
         setLoading(true)
 
         lifecycleScope.launch {
-            userRepository.resetPassword(email).fold(
-                onSuccess = {
-                    // Password reset email sent successfully
-                    setLoading(false)
-                    Toast.makeText(
-                        this@ForgotPasswordActivity,
-                        "Password reset link has been sent to your email",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finish()
-                },
-                onFailure = { exception ->
-                    // Password reset failed
-                    setLoading(false)
-                    Toast.makeText(
-                        this@ForgotPasswordActivity,
-                        "Failed to send reset link: ${exception.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+            try {
+                userRepository.resetPassword(email).fold(
+                    onSuccess = {
+                        // Password reset email sent successfully
+                        setLoading(false)
+                        Toast.makeText(
+                            this@ForgotPasswordActivity,
+                            "Password reset link has been sent to your email. Please check your inbox and spam folder.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        finish()
+                    },
+                    onFailure = { exception ->
+                        // Password reset failed
+                        setLoading(false)
+                        val errorMessage = when {
+                            exception.message?.contains("User not found") == true -> 
+                                "No account found with this email address."
+                            exception.message?.contains("Email rate limit exceeded") == true -> 
+                                "Too many reset requests. Please wait before trying again."
+                            else -> "Failed to send reset link: ${exception.message}"
+                        }
+                        Toast.makeText(
+                            this@ForgotPasswordActivity,
+                            errorMessage,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            } catch (e: Exception) {
+                setLoading(false)
+                Toast.makeText(
+                    this@ForgotPasswordActivity,
+                    "Network error. Please check your connection and try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+    
+    private fun setLoading(isLoading: Boolean) {
+        binding.resetButton.isEnabled = !isLoading
+        binding.emailInput.isEnabled = !isLoading
+        binding.backButton.isEnabled = !isLoading
+        
+        if (isLoading) {
+            binding.progressBar.visibility = View.VISIBLE
+            binding.resetButton.text = ""
+        } else {
+            binding.progressBar.visibility = View.GONE
+            binding.resetButton.text = "Send Reset Link"
+        }
+    }
+}
                 }
             )
         }
