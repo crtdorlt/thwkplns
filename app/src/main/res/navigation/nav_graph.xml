@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_statistics">
+
+    <fragment
+        android:id="@+id/navigation_tasks"
+        android:name="com.theweek.plan.ui.tasks.TasksFragment"
+        android:label="@string/planning"
+        tools:layout="@layout/fragment_tasks" />
+
+    <fragment
+        android:id="@+id/navigation_statistics"
+        android:name="com.theweek.plan.ui.statistics.StatisticsFragment"
+        android:label="@string/performance"
+        tools:layout="@layout/fragment_performance" />
+
+    <fragment
+        android:id="@+id/navigation_timer"
+        android:name="com.theweek.plan.ui.timer.TimerFragment"
+        android:label="@string/timer"
+        tools:layout="@layout/fragment_timer" />
+    
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.theweek.plan.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <dialog
+        android:id="@+id/navigation_add_edit_task"
+        android:name="com.theweek.plan.ui.tasks.AddEditTaskFragment"
+        android:label="@string/add_task"
+        tools:layout="@layout/fragment_add_edit_task" />
+</navigation>

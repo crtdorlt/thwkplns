@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#FF4CAF50</color>
+    <color name="primary_dark">#FF388E3C</color>
+    <color name="primary_light">#FFC8E6C9</color>
+    <color name="accent">#FF009688</color>
+    <color name="secondary">#FF009688</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="green">#FF4CAF50</color>
+    <color name="orange">#FFFF9800</color>
+    <color name="red">#FFF44336</color>
+    <color name="blue">#FF2196F3</color>
+    <color name="yellow">#FFFFEB3B</color>
+    <color name="gray">#FF9E9E9E</color>
+    <color name="light_gray">#FFF5F5F5</color>
+    <color name="dark_gray">#FF616161</color>
+    <color name="background_light">#FFFFFFFF</color>
+    <color name="background_dark">#FF121212</color>
+    <color name="text_primary_light">#DE000000</color>
+    <color name="text_secondary_light">#99000000</color>
+    <color name="text_primary_dark">#DEFFFFFF</color>
+    <color name="text_secondary_dark">#99FFFFFF</color>
+    <color name="purple">#9C27B0</color>
+    <color name="transparent">#00000000</color>
+    <color name="icon_color">?attr/colorControlNormal</color>
+    <!-- Missing colors that were causing build errors -->
+    <color name="divider">#FFBDBDBD</color>
+    <color name="secondary_text">#FF757575</color>
+    <color name="icons">#FFFFFFFF</color>
+    <color name="background">#FFF5F5F5</color>
+</resources>

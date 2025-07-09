@@ -1,0 +1,87 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'kotlin-parcelize'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin' version '2.0.1'
+}
+
+android {
+    namespace 'com.theweek.plan'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.theweek.plan"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Load Supabase credentials from .env file
+        buildConfigField "String", "SUPABASE_URL", "\"${System.getenv('SUPABASE_URL') ?: 'your_supabase_project_url'}\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${System.getenv('SUPABASE_ANON_KEY') ?: 'your_supabase_anon_key'}\""
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.7.0'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.6'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.7.6'
+    implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
+    kapt 'androidx.room:room-compiler:2.6.1'
+    
+    // Calendar view
+    implementation 'com.github.kizitonwose:CalendarView:1.0.4'
+    
+    // Charts
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    
+    // Supabase
+    implementation "io.github.jan-tennert.supabase:gotrue-kt:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:postgrest-kt:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:realtime-kt:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:storage-kt:$rootProject.ext.supabase_version"
+    
+    // Dotenv for environment variables
+    implementation 'io.github.cdimascio:dotenv-kotlin:6.4.1'
+    
+    // CircleImageView for profile picture
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
