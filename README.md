@@ -71,3 +71,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Supabase](https://supabase.com/) for the backend infrastructure
 - [Material Components for Android](https://material.io/develop/android) for the UI components
 - [Room Persistence Library](https://developer.android.com/training/data-storage/room) for local data storage
+# thwkplns
