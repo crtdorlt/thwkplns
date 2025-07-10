@@ -3,11 +3,13 @@ buildscript {
     ext {
         kotlin_version = '1.9.22'
         nav_version = '2.7.6'
-        supabase_version = '2.0.4'
+        // Using the latest stable version of Supabase Kotlin SDK
+        supabase_version = '1.4.5'
     }
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.0.2'
@@ -16,7 +18,19 @@ buildscript {
     }
 }
 
-// Remove the allprojects block as it's now preferred to use settings.gradle for repositories
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven' }
+        // Supabase repository
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots' }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/releases' }
+        maven { url 'https://s01.oss.sonatype.org/content/groups/public' }
+    }
+}
 
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
