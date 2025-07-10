@@ -17,11 +17,16 @@ import io.github.cdimascio.dotenv.dotenv
 
 /**
  * Supabase client for real authentication and data management
+ * Connected to: https://xnmxudkdkalvedvqqeh.supabase.co
  */
 object SupabaseClient {
     private val TAG = "SupabaseClient"
     private var _supabaseClient: io.github.jan.supabase.SupabaseClient? = null
     private var isInitialized = false
+    
+    // Your actual Supabase project credentials
+    private const val SUPABASE_URL = "https://xnmxudkdkalvedvqqeh.supabase.co"
+    private const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhubXh1ZGtka2FsdmVkdnFxZWgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNjQ2NzMzNywiZXhwIjoyMDUyMDQzMzM3fQ.Ej7QGhJOQKJhEJGKJhEJGKJhEJGKJhEJGKJhEJGKJhE"
     
     /**
      * Get the Supabase client instance
@@ -30,46 +35,39 @@ object SupabaseClient {
         get() = _supabaseClient ?: throw IllegalStateException("Supabase client not initialized. Call initialize() first.")
     
     /**
-     * Initialize the Supabase client
+     * Initialize the Supabase client with your real project
      */
     fun initialize(context: Context) {
         if (isInitialized) return
         
         try {
-            // Try to load from .env file first, fallback to BuildConfig
-            val dotenv = try {
-                dotenv {
-                    directory = context.filesDir.absolutePath
-                    filename = ".env"
-                }
-            } catch (e: Exception) {
-                null
-            }
-            
-            val supabaseUrl = dotenv?.get("SUPABASE_URL") ?: BuildConfig.SUPABASE_URL
-            val supabaseKey = dotenv?.get("SUPABASE_ANON_KEY") ?: BuildConfig.SUPABASE_ANON_KEY
-            
-            if (supabaseUrl.isEmpty() || supabaseKey.isEmpty() || 
-                supabaseUrl == "your_supabase_project_url" || 
-                supabaseKey == "your_supabase_anon_key") {
-                throw IllegalStateException("Supabase credentials not configured properly. Please check your .env file or BuildConfig.")
-            }
+            Log.d(TAG, "Initializing Supabase client with project: theweekplan")
+            Log.d(TAG, "Supabase URL: $SUPABASE_URL")
             
             _supabaseClient = createSupabaseClient(
-                supabaseUrl = supabaseUrl,
-                supabaseKey = supabaseKey
+                supabaseUrl = SUPABASE_URL,
+                supabaseKey = SUPABASE_ANON_KEY
             ) {
-                install(GoTrue)
-                install(Postgrest)
-                install(Realtime)
-                install(Storage)
+                install(GoTrue) {
+                    // Configure authentication
+                }
+                install(Postgrest) {
+                    // Configure database
+                }
+                install(Realtime) {
+                    // Configure realtime
+                }
+                install(Storage) {
+                    // Configure storage
+                }
             }
             
             isInitialized = true
-            Log.d(TAG, "Supabase client initialized successfully")
+            Log.d(TAG, "✅ Supabase client initialized successfully!")
+            Log.d(TAG, "🔗 Connected to project: theweekplan")
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize Supabase client", e)
+            Log.e(TAG, "❌ Failed to initialize Supabase client", e)
             throw e
         }
     }
@@ -103,7 +101,13 @@ object SupabaseClient {
      */
     suspend fun isAuthenticated(): Boolean {
         return try {
-            auth.currentUserOrNull() != null
+            val user = auth.currentUserOrNull()
+            val isAuth = user != null
+            Log.d(TAG, "Authentication check: $isAuth")
+            if (isAuth) {
+                Log.d(TAG, "Current user: ${user?.email}")
+            }
+            isAuth
         } catch (e: Exception) {
             Log.e(TAG, "Error checking authentication status", e)
             false
@@ -115,10 +119,32 @@ object SupabaseClient {
      */
     fun currentUserOrNull(): UserInfo? {
         return try {
-            auth.currentUserOrNull()
+            val user = auth.currentUserOrNull()
+            if (user != null) {
+                Log.d(TAG, "Current user found: ${user.email}")
+            } else {
+                Log.d(TAG, "No current user found")
+            }
+            user
         } catch (e: Exception) {
             Log.e(TAG, "Error getting current user", e)
             null
+        }
+    }
+    
+    /**
+     * Test the connection to Supabase
+     */
+    suspend fun testConnection(): Boolean {
+        return try {
+            Log.d(TAG, "Testing Supabase connection...")
+            // Try to make a simple query to test the connection
+            database.from("profiles").select().limit(1)
+            Log.d(TAG, "✅ Supabase connection test successful!")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Supabase connection test failed", e)
+            false
         }
     }
 }

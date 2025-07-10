@@ -2,6 +2,7 @@ package com.theweek.plan.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 
 class SignupActivity : AppCompatActivity() {
 
+    private val TAG = "SignupActivity"
     private lateinit var binding: ActivitySignupBinding
     private lateinit var userRepository: UserRepository
 
@@ -21,6 +23,8 @@ class SignupActivity : AppCompatActivity() {
         binding = ActivitySignupBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        Log.d(TAG, "📝 Signup Activity started")
+        
         userRepository = UserRepository(this)
 
         // Set up click listeners
@@ -85,6 +89,8 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private fun signUp(email: String, password: String) {
+        Log.d(TAG, "📝 Attempting signup for: $email")
+        
         // Show loading state
         setLoading(true)
 
@@ -92,7 +98,7 @@ class SignupActivity : AppCompatActivity() {
             try {
                 userRepository.signUp(email, password).fold(
                     onSuccess = { userId ->
-                        // Sign up successful
+                        Log.d(TAG, "✅ Signup successful for user: $userId")
                         setLoading(false)
                         Toast.makeText(
                             this@SignupActivity,
@@ -102,7 +108,7 @@ class SignupActivity : AppCompatActivity() {
                         navigateToMain()
                     },
                     onFailure = { exception ->
-                        // Sign up failed
+                        Log.e(TAG, "❌ Signup failed", exception)
                         setLoading(false)
                         val errorMessage = when {
                             exception.message?.contains("User already registered") == true -> 
@@ -113,6 +119,8 @@ class SignupActivity : AppCompatActivity() {
                                 "Please enter a valid email address."
                             exception.message?.contains("Signup is disabled") == true -> 
                                 "Account creation is currently disabled. Please contact support."
+                            exception.message?.contains("weak password") == true -> 
+                                "Password is too weak. Please use a stronger password."
                             else -> "Sign up failed: ${exception.message}"
                         }
                         Toast.makeText(
@@ -123,6 +131,7 @@ class SignupActivity : AppCompatActivity() {
                     }
                 )
             } catch (e: Exception) {
+                Log.e(TAG, "❌ Network error during signup", e)
                 setLoading(false)
                 Toast.makeText(
                     this@SignupActivity,
@@ -150,30 +159,7 @@ class SignupActivity : AppCompatActivity() {
     }
     
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-}
-                }
-            )
-        }
-    }
-
-    private fun setLoading(isLoading: Boolean) {
-        if (isLoading) {
-            binding.progressBar.visibility = View.VISIBLE
-            binding.signupButton.text = ""
-            binding.signupButton.isEnabled = false
-        } else {
-            binding.progressBar.visibility = View.GONE
-            binding.signupButton.text = "Sign Up"
-            binding.signupButton.isEnabled = true
-        }
-    }
-
-    private fun navigateToMain() {
+        Log.d(TAG, "🏠 Navigating to main activity")
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

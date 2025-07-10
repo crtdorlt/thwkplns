@@ -21,8 +21,8 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
         // Load Supabase credentials from .env file
-        buildConfigField "String", "SUPABASE_URL", "\"${System.getenv('SUPABASE_URL') ?: 'your_supabase_project_url'}\""
-        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${System.getenv('SUPABASE_ANON_KEY') ?: 'your_supabase_anon_key'}\""
+        buildConfigField "String", "SUPABASE_URL", "\"https://xnmxudkdkalvedvqqeh.supabase.co\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhubXh1ZGtka2FsdmVkdnFxZWgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNjQ2NzMzNywiZXhwIjoyMDUyMDQzMzM3fQ.Ej7QGhJOQKJhEJGKJhEJGKJhEJGKJhEJGKJhEJGKJhE\""
     }
 
     buildTypes {

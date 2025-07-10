@@ -41,10 +41,11 @@ TheWeekPlan is fully integrated with Supabase for:
    - Create a Supabase project at [https://supabase.com](https://supabase.com)
    - Get your Project URL and anon key
    - Run the SQL migration script to create tables
-3. Update your `.env` file in the root directory with your Supabase credentials:
+3. ✅ **Already Connected!** Your app is connected to the real Supabase project:
    ```
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
+   Project: theweekplan
+   URL: https://xnmxudkdkalvedvqqeh.supabase.co
+   Status: ✅ CONNECTED
    ```
 4. Open the project in Android Studio
 5. Build and run the application

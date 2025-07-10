@@ -2,6 +2,7 @@ package com.theweek.plan.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
+    private val TAG = "LoginActivity"
     private lateinit var binding: ActivityLoginBinding
     private lateinit var userRepository: UserRepository
 
@@ -21,12 +23,21 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        Log.d(TAG, "🔐 Login Activity started")
+        
         userRepository = UserRepository(this)
 
         // Check if user is already logged in
         lifecycleScope.launch {
-            if (userRepository.isAuthenticated()) {
-                navigateToMain()
+            try {
+                if (userRepository.isAuthenticated()) {
+                    Log.d(TAG, "✅ User already authenticated, navigating to main")
+                    navigateToMain()
+                } else {
+                    Log.d(TAG, "❌ User not authenticated, showing login form")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking authentication", e)
             }
         }
 
@@ -64,6 +75,9 @@ class LoginActivity : AppCompatActivity() {
         if (email.isEmpty()) {
             binding.emailLayout.error = "Email is required"
             isValid = false
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.emailLayout.error = "Please enter a valid email address"
+            isValid = false
         } else {
             binding.emailLayout.error = null
         }
@@ -79,6 +93,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun login(email: String, password: String) {
+        Log.d(TAG, "🔐 Attempting login for: $email")
+        
         // Show loading state
         setLoading(true)
 
@@ -86,7 +102,7 @@ class LoginActivity : AppCompatActivity() {
             try {
                 userRepository.signIn(email, password).fold(
                     onSuccess = { userId ->
-                        // Login successful
+                        Log.d(TAG, "✅ Login successful for user: $userId")
                         setLoading(false)
                         Toast.makeText(
                             this@LoginActivity,
@@ -96,7 +112,7 @@ class LoginActivity : AppCompatActivity() {
                         navigateToMain()
                     },
                     onFailure = { exception ->
-                        // Login failed
+                        Log.e(TAG, "❌ Login failed", exception)
                         setLoading(false)
                         val errorMessage = when {
                             exception.message?.contains("Invalid login credentials") == true -> 
@@ -105,6 +121,8 @@ class LoginActivity : AppCompatActivity() {
                                 "Please check your email and confirm your account first."
                             exception.message?.contains("Too many requests") == true -> 
                                 "Too many login attempts. Please try again later."
+                            exception.message?.contains("User not found") == true -> 
+                                "No account found with this email. Please sign up first."
                             else -> "Login failed: ${exception.message}"
                         }
                         Toast.makeText(
@@ -115,6 +133,7 @@ class LoginActivity : AppCompatActivity() {
                     }
                 )
             } catch (e: Exception) {
+                Log.e(TAG, "❌ Network error during login", e)
                 setLoading(false)
                 Toast.makeText(
                     this@LoginActivity,
@@ -142,30 +161,7 @@ class LoginActivity : AppCompatActivity() {
     }
     
     private fun navigateToMain() {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-}
-                }
-            )
-        }
-    }
-
-    private fun setLoading(isLoading: Boolean) {
-        if (isLoading) {
-            binding.progressBar.visibility = View.VISIBLE
-            binding.loginButton.text = ""
-            binding.loginButton.isEnabled = false
-        } else {
-            binding.progressBar.visibility = View.GONE
-            binding.loginButton.text = "Login"
-            binding.loginButton.isEnabled = true
-        }
-    }
-
-    private fun navigateToMain() {
+        Log.d(TAG, "🏠 Navigating to main activity")
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
