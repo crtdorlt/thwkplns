@@ -74,7 +74,11 @@ dependencies {
     implementation "io.github.jan-tennert.supabase:postgrest-kt:$rootProject.ext.supabase_version"
     implementation "io.github.jan-tennert.supabase:realtime-kt:$rootProject.ext.supabase_version"
     implementation "io.github.jan-tennert.supabase:storage-kt:$rootProject.ext.supabase_version"
-    implementation "io.github.jan-tennert.supabase:serializer-kotlinx:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:functions-kt:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:apollo-graphql:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:postgrest-gotrue:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:realtime-postgres-changes:$rootProject.ext.supabase_version"
+    implementation "io.github.jan-tennert.supabase:storage-kt:$rootProject.ext.supabase_version"
     
     // Kotlinx Serialization
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
