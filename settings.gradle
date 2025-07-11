@@ -12,9 +12,8 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
-        // Supabase repositories
-        maven { url 'https://s01.oss.sonatype.org/content/repositories/releases' }
-        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        // JitPack repository for Supabase community packages
+        maven { url 'https://jitpack.io' }
     }
 }
 
