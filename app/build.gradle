@@ -4,7 +4,6 @@ plugins {
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
     id 'kotlinx-serialization'
-    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin' version '2.0.1'
 }
 
 android {
@@ -69,18 +68,21 @@ dependencies {
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     
-    // Supabase dependencies
-    implementation 'com.github.supabase-community:gotrue-kt:1.4.5'
-    implementation 'com.github.supabase-community:postgrest-kt:1.4.5'
-    implementation 'com.github.supabase-community:realtime-kt:1.4.5'
-    implementation 'com.github.supabase-community:storage-kt:1.4.5'
-    implementation 'com.github.supabase-community:functions-kt:1.4.5'
+    // Official Supabase Kotlin SDK
+    implementation platform('io.github.jan-tennert.supabase:bom:2.0.4')
+    implementation 'io.github.jan-tennert.supabase:supabase-kt'
+    implementation 'io.github.jan-tennert.supabase:gotrue-kt'
+    implementation 'io.github.jan-tennert.supabase:postgrest-kt'
+    implementation 'io.github.jan-tennert.supabase:realtime-kt'
+    implementation 'io.github.jan-tennert.supabase:storage-kt'
     
     // Kotlinx Serialization
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
     
-    // Dotenv for environment variables
-    implementation 'io.github.cdimascio:dotenv-kotlin:6.4.1'
+    // Ktor for networking (required by Supabase)
+    implementation 'io.ktor:ktor-client-android:2.3.7'
+    implementation 'io.ktor:ktor-client-core:2.3.7'
+    implementation 'io.ktor:ktor-utils:2.3.7'
     
     // CircleImageView for profile picture
     implementation 'de.hdodenhof:circleimageview:3.1.0'

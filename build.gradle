@@ -3,7 +3,6 @@ buildscript {
     ext {
         kotlin_version = '1.9.22'
         nav_version = '2.7.6'
-        // Using the correct stable version of Supabase Kotlin SDK
         supabase_version = '2.0.4'
     }
     repositories {
@@ -17,8 +16,6 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }
 }
-
-// Remove the allprojects block as it's now preferred to use settings.gradle for repositories
 
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
