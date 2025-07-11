@@ -109,8 +109,9 @@ class ProfileFragment : Fragment() {
         }
         binding.email.text = profile.email
         
-        // Set dark mode switch from user profile (now using real data)
-        binding.darkModeSwitch.isChecked = profile.prefersDarkMode
+        // Set dark mode switch from shared preferences (not from user profile)
+        val sharedPrefs = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
+        binding.darkModeSwitch.isChecked = sharedPrefs.getBoolean("dark_mode", false)
         
         // Set week start day
         val weekDays = arrayOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
@@ -124,10 +125,10 @@ class ProfileFragment : Fragment() {
                 if (timeParts.size == 2) {
                     val hour = timeParts[0].toInt()
                     val minute = timeParts[1].toInt()
-                    val calendar = java.util.Calendar.getInstance()
-                    calendar.set(java.util.Calendar.HOUR_OF_DAY, hour)
-                    calendar.set(java.util.Calendar.MINUTE, minute)
-                    val displayFormat = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+                    val calendar = Calendar.getInstance()
+                    calendar.set(Calendar.HOUR_OF_DAY, hour)
+                    calendar.set(Calendar.MINUTE, minute)
+                    val displayFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
                     displayFormat.format(calendar.time)
                 } else {
                     profile.reminderTime
@@ -138,36 +139,6 @@ class ProfileFragment : Fragment() {
         } else {
             "Not set"
         }
-        
-        // Set last sync time
-        updateLastSyncTime(profile.lastSyncTimestamp)
-    }
-    
-    private fun updateLastSyncTime(timestamp: Long) {
-        if (timestamp > 0) {
-            val date = java.util.Date(timestamp)
-            val format = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.getDefault())
-            binding.lastSyncValue.text = "Last sync: ${format.format(date)}"
-        } else {
-            binding.lastSyncValue.text = "Never synced"
-        }
-    }
-    
-    private fun updateUI(profile: UserProfile) {
-        // Set user info
-        binding.displayName.text = profile.displayName.ifEmpty { "User" }
-        binding.email.text = profile.email
-        
-        // Set dark mode switch from shared preferences (not from user profile)
-        val sharedPrefs = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
-        binding.darkModeSwitch.isChecked = sharedPrefs.getBoolean("dark_mode", false)
-        
-        // Set week start day
-        val weekDays = arrayOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-        binding.weekStartValue.text = weekDays[profile.weekStartsOn]
-        
-        // Set reminder time
-        binding.reminderTimeValue.text = profile.reminderTime ?: "Not set"
         
         // Set last sync time
         updateLastSyncTime(profile.lastSyncTimestamp)

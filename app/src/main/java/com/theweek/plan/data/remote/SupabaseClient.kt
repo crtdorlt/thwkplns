@@ -13,7 +13,6 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
-import io.github.cdimascio.dotenv.dotenv
 
 /**
  * Supabase client for real authentication and data management
