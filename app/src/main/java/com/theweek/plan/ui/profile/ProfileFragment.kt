@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.lifecycle.ViewModelProvider
 import com.theweek.plan.BuildConfig
 import com.theweek.plan.R
 import com.theweek.plan.data.repository.TaskSyncRepository
