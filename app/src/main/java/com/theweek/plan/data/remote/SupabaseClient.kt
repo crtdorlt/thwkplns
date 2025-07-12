@@ -47,18 +47,10 @@ object SupabaseClient {
                 supabaseUrl = SUPABASE_URL,
                 supabaseKey = SUPABASE_ANON_KEY
             ) {
-                install(GoTrue) {
-                    // Configure authentication
-                }
-                install(Postgrest) {
-                    // Configure database
-                }
-                install(Realtime) {
-                    // Configure realtime
-                }
-                install(Storage) {
-                    // Configure storage
-                }
+                install(GoTrue)
+                install(Postgrest)
+                install(Realtime)
+                install(Storage)
             }
             
             isInitialized = true

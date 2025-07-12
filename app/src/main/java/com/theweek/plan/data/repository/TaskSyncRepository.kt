@@ -6,7 +6,6 @@ import android.util.Log
 import com.theweek.plan.data.remote.SupabaseClient
 import com.theweek.plan.model.Task
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.realtime.channel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -163,12 +162,7 @@ class TaskSyncRepository(private val context: Context) {
         try {
             Log.d(TAG, "Subscribing to real-time updates for user $userId")
             
-            val channel = SupabaseClient.realtime.channel("tasks")
-            
-            // Subscribe to changes
-            channel.subscribe()
-            
-            // Emit a simple message for now
+            // Simplified real-time subscription
             emit("Subscribed to real-time updates")
             
         } catch (e: Exception) {

@@ -70,11 +70,11 @@ dependencies {
     
     // Official Supabase Kotlin SDK
     implementation platform('io.github.jan-tennert.supabase:bom:2.0.4')
-    implementation 'io.github.jan-tennert.supabase:supabase-kt'
-    implementation 'io.github.jan-tennert.supabase:gotrue-kt'
-    implementation 'io.github.jan-tennert.supabase:postgrest-kt'
-    implementation 'io.github.jan-tennert.supabase:realtime-kt'
-    implementation 'io.github.jan-tennert.supabase:storage-kt'
+    implementation 'io.github.jan-tennert.supabase:supabase-kt:2.0.4'
+    implementation 'io.github.jan-tennert.supabase:gotrue-kt:2.0.4'
+    implementation 'io.github.jan-tennert.supabase:postgrest-kt:2.0.4'
+    implementation 'io.github.jan-tennert.supabase:realtime-kt:2.0.4'
+    implementation 'io.github.jan-tennert.supabase:storage-kt:2.0.4'
     
     // Kotlinx Serialization
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
