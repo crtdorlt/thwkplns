@@ -3,7 +3,6 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
-    id 'kotlinx-serialization'
 }
 
 android {
@@ -18,10 +17,6 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        
-        // Real Supabase credentials for your connected project
-        buildConfigField "String", "SUPABASE_URL", "\"https://xnmxudkdkalvedvqqeh.supabase.co\""
-        buildConfigField "String", "SUPABASE_ANON_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhubXh1ZGtka2FsdmVkdnFxZWgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNjQ2NzMzNywiZXhwIjoyMDUyMDQzMzM3fQ.Ej7QGhJOQKJhEJGKJhEJGKJhEJGKJhEJGKJhEJGKJhE\""
     }
 
     buildTypes {
@@ -67,22 +62,6 @@ dependencies {
     
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    
-    // Official Supabase Kotlin SDK
-    implementation platform('io.github.jan-tennert.supabase:bom:2.0.4')
-    implementation 'io.github.jan-tennert.supabase:supabase-kt:2.0.4'
-    implementation 'io.github.jan-tennert.supabase:gotrue-kt:2.0.4'
-    implementation 'io.github.jan-tennert.supabase:postgrest-kt:2.0.4'
-    implementation 'io.github.jan-tennert.supabase:realtime-kt:2.0.4'
-    implementation 'io.github.jan-tennert.supabase:storage-kt:2.0.4'
-    
-    // Kotlinx Serialization
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
-    
-    // Ktor for networking (required by Supabase)
-    implementation 'io.ktor:ktor-client-android:2.3.7'
-    implementation 'io.ktor:ktor-client-core:2.3.7'
-    implementation 'io.ktor:ktor-utils:2.3.7'
     
     // CircleImageView for profile picture
     implementation 'de.hdodenhof:circleimageview:3.1.0'
