@@ -7,16 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.theweek.plan.data.AppDatabase
 import com.theweek.plan.data.CategoryCount
 import com.theweek.plan.data.TaskRepository
-import com.theweek.plan.data.sync.SyncManager
 import com.theweek.plan.model.Task
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Date
 
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: TaskRepository
-    private val syncManager: SyncManager
     val allTasks: LiveData<List<Task>>
     val completedTasksCount: LiveData<Int>
     val pendingTasksCount: LiveData<Int>
@@ -25,16 +22,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val taskDao = AppDatabase.getDatabase(application).taskDao()
-        syncManager = SyncManager(application)
-        repository = TaskRepository(taskDao, syncManager)
+        repository = TaskRepository(taskDao)
         allTasks = repository.allTasks
         completedTasksCount = repository.completedTasksCount
         pendingTasksCount = repository.pendingTasksCount
         averageProductivityScore = repository.averageProductivityScore
         taskCountByCategory = repository.taskCountByCategory
-        
-        // Initialize sync manager
-        syncManager.initialize()
     }
 
     fun getTaskById(taskId: String): LiveData<Task> {
@@ -57,37 +50,23 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getTasksByDate(date)
     }
 
-    fun insertTask(task: Task) = viewModelScope.launch(Dispatchers.IO) {
+    fun insertTask(task: Task) = viewModelScope.launch {
         repository.insertTask(task)
     }
 
-    fun updateTask(task: Task) = viewModelScope.launch(Dispatchers.IO) {
+    fun updateTask(task: Task) = viewModelScope.launch {
         repository.updateTask(task)
     }
 
-    fun deleteTask(task: Task) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteTask(task: Task) = viewModelScope.launch {
         repository.deleteTask(task)
     }
 
-    fun deleteTaskById(taskId: String) = viewModelScope.launch(Dispatchers.IO) {
+    fun deleteTaskById(taskId: String) = viewModelScope.launch {
         repository.deleteTaskById(taskId)
     }
 
-    fun updateTaskCompletionStatus(taskId: String, isCompleted: Boolean) = viewModelScope.launch(Dispatchers.IO) {
+    fun updateTaskCompletionStatus(taskId: String, isCompleted: Boolean) = viewModelScope.launch {
         repository.updateTaskCompletionStatus(taskId, isCompleted)
-    }
-    
-    /**
-     * Perform a full sync with Supabase
-     */
-    suspend fun performFullSync(): Boolean {
-        return repository.performFullSync()
-    }
-    
-    /**
-     * Start automatic sync
-     */
-    fun startSync() {
-        repository.startSync()
     }
 }

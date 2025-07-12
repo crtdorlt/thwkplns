@@ -1,35 +1,20 @@
 package com.theweek.plan
 
-import android.content.Intent
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.theweek.plan.data.repository.UserRepository
 import com.theweek.plan.databinding.ActivityMainBinding
-import com.theweek.plan.ui.auth.LoginActivity
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var userRepository: UserRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize user repository
-        userRepository = UserRepository(this)
-        
-        // Check if user is authenticated and initialize sync
-        checkAuthStatusAndInitialize()
         
         // Load theme preference
         val sharedPrefs = getSharedPreferences("settings", MODE_PRIVATE)
@@ -74,61 +59,5 @@ class MainActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment)
         return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-    
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.top_app_bar_menu, menu)
-        return true
-    }
-    
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Settings option removed as functionality is now in the Profile screen
-        return super.onOptionsItemSelected(item)
-    }
-    
-    /**
-     * Check if the user is authenticated, redirect to login if not, and initialize sync if authenticated
-     */
-    private fun checkAuthStatusAndInitialize() {
-        lifecycleScope.launch {
-            try {
-                val isAuthenticated = userRepository.isAuthenticated()
-                if (!isAuthenticated) {
-                    navigateToLogin()
-                } else {
-                    // User is authenticated, start background sync
-                    initializeSync()
-                }
-            } catch (e: Exception) {
-                // If there's an error checking auth (e.g., Supabase not configured), go to login
-                navigateToLogin()
-            }
-        }
-    }
-    
-    /**
-     * Initialize sync manager and start background sync
-     */
-    private fun initializeSync() {
-        lifecycleScope.launch {
-            try {
-                // Get TaskViewModel and start sync
-                val taskViewModel = ViewModelProvider(this@MainActivity)[com.theweek.plan.ui.tasks.TaskViewModel::class.java]
-                taskViewModel.startSync()
-            } catch (e: Exception) {
-                // Log error but don't crash the app
-                e.printStackTrace()
-            }
-        }
-    }
-    
-    /**
-     * Navigate to login screen
-     */
-    private fun navigateToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
     }
 }
